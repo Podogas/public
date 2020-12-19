@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { CurrentUserContext } from "../../contexts/CurrentUserContext.js";
 import { Route, Switch, Redirect, useHistory } from "react-router-dom";
 import mestoApi from "../../utils/Api.js";
-import * as auth from "../../utils/authApi.js";
 import Header from "../Header/Header.js";
 import Main from "../Main/Main.js";
 import Footer from "../Footer/Footer.js";
@@ -33,7 +32,20 @@ function App() {
   const [authPopupContent, setAuthPopupContent] = useState({});
   const [infoTooltipVisible, setInfoTooltipVisible] = useState(false);
   const history = useHistory();
-
+  // проверка токена
+  React.useEffect(() => {
+    const jwt = localStorage.getItem("jwt");
+    if (jwt) { console.log(jwt)
+      mestoApi
+        .getToken(jwt)
+        .then((res) => {
+          setLoggedIn(true);
+          setEmail(res.data.email);
+          history.push("/");
+        })
+        .catch((err) => console.log(err));
+    }
+  }, [loggedIn, history])
   React.useEffect(() => {
     mestoApi
       .getPageData()
@@ -46,26 +58,12 @@ function App() {
       );
   }, []);
 
-  // проверка токена
-  React.useEffect(() => {
-    const jwt = localStorage.getItem("jwt");
-    console.log("check token")
-    if (jwt) { console.log(jwt)
-      auth
-        .getToken(jwt)
-        .then((res) => {
-          setLoggedIn(true);
-          setEmail(res.data.email);
-          history.push("/");
-        })
-        .catch((err) => console.log(err));
-    }
-  }, [loggedIn, history]);
+
 
   // Регистрация
   function handleSignup(password, email) {
-    auth
-      .signUp(escape(password), email)
+    mestoApi
+      .signUp(password, email)
       .then(() => {
         setAuthPopupContent({
           imageSrc: authSucsess,
@@ -88,8 +86,8 @@ function App() {
 
   // авторизация
   function handleSignin(password, email) {
-    auth
-      .signIn(escape(password), email)
+    mestoApi
+      .signIn(password, email)
       .then((data) => {
         setEmail(data.email);
         setLoggedIn(true);

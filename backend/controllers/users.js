@@ -5,7 +5,7 @@ const {
   NotFoundError
 } = require("../middlewares/errors.js");
 // Эту строчку заменить, ключ должен храниться в файле конфига
-const jwtSecretKey = 'temporarySecretKey'
+const { NODE_ENV, JWT_SECRET } = process.env;
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -24,6 +24,7 @@ module.exports.getUserById = (req, res, next) => {
 };
 module.exports.createUser = (req, res, next) => {
   const { name, about, avatar, email, password } = req.body;
+  console.log(name, about, avatar, email, password )
   bcrypt
     .hash(password, 10)
     .then((hash) => {
@@ -41,20 +42,23 @@ module.exports.createUser = (req, res, next) => {
 };
 
 module.exports.login = (req, res, next) => {
+
   const { email, password } = req.body;
+  console.log(email, password)
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, jwtSecretKey, { expiresIn: '7d' });
-      res.cookie('JWT', token, { maxAge: 60*60*24*7, httpOnly: true })
+      console.log(user)
+      const jwt = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
+      console.log(jwt)
+      res.headers.authorization(jwt)
 
     })
-    .end()
     .catch(next);
 };
 
 
 module.exports.getProfile = (req, res) => {
-  return req.user;
+  res.status(200).send(req.user);
 }
 
 

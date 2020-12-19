@@ -1,7 +1,10 @@
 /*  */
+require('dotenv').config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
+const bodyParser = require('body-parser');
 const usersRoutes = require("./routes/users.js");
 const cardsRoutes = require("./routes/cards.js");
 const authRoutes = require("./routes/auth.js");
@@ -13,7 +16,7 @@ const {
 } = require("./middlewares/errors.js");
 const { errors } = require('celebrate');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-const { PORT = 3000 } = process.env;
+const { PORT = 3001 } = process.env;
 const cors = require('cors');
 const app = express();
 mongoose.connect("mongodb://localhost:27017/mestodb", {
@@ -22,10 +25,11 @@ mongoose.connect("mongodb://localhost:27017/mestodb", {
   useFindAndModify: false,
   useUnifiedTopology: true,
 });
-app.use(cors())
-app.use(requestLogger);
-app.use(express.json());
+app.use('*', cors())
 app.use(cookieParser());
+app.use(requestLogger);
+app.use(bodyParser.json());
+
 app.use("/", authRoutes);
 // ниже вызываем роуты защищенные авторизацией
 app.use(auth);
@@ -41,3 +45,4 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {});
+console.log(`app runing on ${PORT}`)

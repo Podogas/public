@@ -1,3 +1,5 @@
+
+
 class Api {
   constructor(config) {
     this._url = config.baseUrl;
@@ -73,12 +75,104 @@ class Api {
       body: JSON.stringify({ avatar: url }),
     }).then((res) => this._checkResponse(res));
   }
+
+
+
+
+  // получение токена
+  getToken(token){
+    console.log(token)
+  return fetch(`${this._url}/users/me`, {
+    method: "GET",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+  })
+    .then((res) => {
+      if (!res.ok) {
+        console.log(res);
+        return res.json().then((err) => {
+          throw new Error(err.message);
+        });
+      }
+
+      return res.json();
+    })
+    .then((data) => {return data})
+}  
+// регистрация
+signUp(password, email){
+  return fetch(`${this._url}/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password, email }),
+  }).then((res) => {
+    if (!res.ok) {
+      if (res.status === 400) {
+        throw new Error("Не передано одно из полей");
+      }
+      return res.json().then((err) => {
+        throw new Error(err.message);
+      });
+    }
+    console.log(res)
+    return res;
+  });
+}
+// авторизация
+signIn(password, email) {
+  console.log(JSON.stringify({ password, email }))
+  fetch(`${this._url}/signin`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password, email }),
+  })
+    .then((res) => {
+
+      if (res.status === 400) {
+        throw new Error("Не передано одно из полей");
+      } else if (res.status === 401) {
+        throw new Error("Пользователь с таким email не найден");
+      }
+      return res;
+    })
+    .then((data) => {
+      if (data.token) {
+        localStorage.setItem("jwt", data.token);
+        return data.token;
+      }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 const mestoApi = new Api({
   baseUrl: "https://api.podogas.students.nomoreparties.space",
   headers: {
     "Content-Type": "application/json",
+    "authorization" : `Bearer ${localStorage.getItem('jwt')}`
+
   },
-});
+})
 export default mestoApi;
